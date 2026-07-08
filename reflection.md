@@ -3,14 +3,26 @@
 ## 1. System Design
 
 **a. Initial design**
+Natural Language- should be able to schedule a walk, schedule what time the dogs need to eat,add a pet
 
 - Briefly describe your initial UML design.
+For my design, I created 4 classes with the inital UML design. I also made 3 just for storing data (Owner, Pet and Task). I kept the setup simple so that the owner had pets, and the pets has tasks. Then the scheduler was built to take those tasks and organize them to a plan.
+
 - What classes did you include, and what responsibilities did you assign to each?
+
+  - I created a task to track activity's time and priority, and to update priorities when needed. Pet was also created to store an animal's details and add tasks to this list. Owner was meant for storage of user's names and to add pets to their profile. Scheduler was used to write each tasks into a time budget and to explain the final schedule.
 
 **b. Design changes**
 
 - Did your design change during implementation?
+
+  Yes. I asked my AI coding assistant to review the class skeleton for missing
+  relationships and logic bottlenecks, and I made two changes based on its feedback.
+
 - If yes, describe at least one change and why you made it.
+
+  Yes, I changed (task.priority) into an IntEnum to ensure sorting to stay consistent also preventing typos from occuring.
+  I held off on linking tasks back to pets, and chose a simple priority sort over a complex algorithm.
 
 ---
 

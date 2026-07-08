@@ -7,6 +7,19 @@ Data objects (Task, Pet, Owner) use Python dataclasses to keep the code clean.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import IntEnum
+
+
+class Priority(IntEnum):
+    """Task priority with a built-in ordering (higher value = more important).
+
+    Using an IntEnum instead of a free-form string gives the scheduler a
+    reliable way to rank tasks and rejects invalid priority values.
+    """
+
+    LOW = 1
+    MEDIUM = 2
+    HIGH = 3
 
 
 @dataclass
@@ -15,9 +28,9 @@ class Task:
 
     title: str
     duration_minutes: int
-    priority: str
+    priority: Priority
 
-    def update_priority(self, new_priority: str) -> None:
+    def update_priority(self, new_priority: Priority) -> None:
         """Change this task's priority."""
         ...
 
@@ -44,6 +57,14 @@ class Owner:
 
     def add_pet(self, pet: Pet) -> None:
         """Register a pet under this owner."""
+        ...
+
+    def all_tasks(self) -> list[Task]:
+        """Collect every task across all of this owner's pets.
+
+        Bridges the Owner -> Pet -> Task chain to the flat list the
+        Scheduler expects.
+        """
         ...
 
 
