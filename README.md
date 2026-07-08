@@ -153,27 +153,18 @@ python -m streamlit run app.py
 
 **What you can do in the UI**
 
-- Set the **owner name** and **add pets** (name + species). Pets persist across page
-  reruns because the `Owner` object lives in `st.session_state`.
-- **Add tasks** to any pet: title, start time (`HH:MM`), duration, frequency
-  (daily/weekly/once), and priority.
-- Review a **Current tasks** table per pet, shown in chronological order.
-- Set an **available time budget** and click **Generate schedule** to build the day's plan.
+- Add an owner and pets.
 
-**Example workflow**
+Add tasks (time, duration, frequency, priority) to any pet.
 
-1. Enter the owner's name (e.g., *Betty*).
-2. Add a pet → *Tyna* (dog), then a second pet → *Dennis* (cat).
-3. Add a task → *Morning walk*, `08:00`, 30 min, daily, high priority.
-4. Add more tasks, including two at the same time (e.g., both `18:00`) to trigger a conflict.
-5. Set the budget to 60 minutes and click **Generate schedule**.
+Set a time budget and click Generate schedule.(Tip: Add two tasks at the exact same time to test the conflict warning!)
 
-**Key Scheduler behaviors shown**
+Key Behaviors
+Prioritized & Sorted: Fits the highest-priority tasks into the budget, sorted by time.
 
-- The plan lists the highest-priority tasks that fit the budget, **sorted by time**.
-- A green **success** banner confirms how many tasks were scheduled.
-- Any two tasks sharing a start time raise a **⚠️ conflict warning** telling the owner
-  which tasks to reschedule; a clean day shows a success message instead.
+Status Updates: Displays a green success banner confirming scheduled tasks.
+
+Conflict Alerts: Shows a warning alert sign if tasks share a start time.
 
 **Sample CLI output** (from `python main.py`):
 
