@@ -60,12 +60,13 @@ Today's Schedule
 3 task(s), 55 of 60 min used.
 
 All tasks sorted by time
---------------------------------------------
-07:30  Feed breakfast  (high)
-08:00  Morning walk  (high)
-12:00  Clean litter box  (medium)
-18:00  Evening walk  (medium)
-18:00  Play / enrichment  (low)
+
+
+07:30  Feed breakfast 
+08:00  Morning walk  
+12:00  Clean litter box  
+5:00  Evening walk  
+7:00  Play / enrichment
 
 Tasks for Tyna:
   - Evening walk
@@ -84,25 +85,39 @@ Conflict check:
 
 ## 🧪 Testing PawPal+
 
-```bash
-# Run the full test suite:
-pytest
+Run the full test suite from the project root:
 
-# Run with coverage:
-pytest --cov
+```bash
+python -m pytest
 ```
+
+**What the tests cover** (`tests/test_pawpal.py`, 13 tests):
+
+- **Basic behavior** — `mark_complete()` flips a task's status; `add_task()` grows a pet's task list.
+- **Sorting** — `sort_by_time()` returns tasks in chronological `HH:MM` order.
+- **Recurrence** — completing a daily task creates a new task due the next day; weekly advances 7 days; a `once` task does not recur.
+- **Conflict detection** — duplicate times are flagged, unique times are not, and completed tasks are ignored.
+- **Budget-limited scheduling** — the plan never exceeds the time budget and drops lower-priority tasks.
+- **Edge case** — a pet with no tasks yields an empty plan and a clear message.
+- **Filtering** — by pet name and by completion status.
 
 Sample test output:
 
 ```
 ============================= test session starts =============================
 platform win32 -- Python 3.13.14, pytest-9.1.1, pluggy-1.6.0
-collected 2 items
+collected 13 items
 
-tests\test_pawpal.py ..                                                  [100%]
+tests\test_pawpal.py .............                                       [100%]
 
-============================== 2 passed in 1.59s ==============================
+============================= 13 passed in 0.23s ==============================
 ```
+
+**Confidence Level: ★★★★☆ (4/5).** All core behaviors — sorting, recurrence,
+conflict detection, budgeting, and filtering — pass their happy-path and edge-case
+tests. I dropped one star because conflict detection only catches exact-time matches
+(not overlapping durations) and recurrence isn't yet tested across month/year
+boundaries.
 
 ## 📐 Smarter Scheduling
 
@@ -111,11 +126,22 @@ implements it:
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | `Scheduler.sort_by_time()` | Sorts tasks by their `HH:MM` clock time using `sorted()` with a `lambda` key. |
-| Priority selection | `Scheduler.generate_schedule()` / `schedule_for_owner()` | Greedily fills a time budget with the highest-priority tasks; skips ones that don't fit. |
-| Filtering | `Scheduler.filter_by_pet()`, `Scheduler.filter_by_status()` | Filter all tasks by pet name or by completion status. |
-| Conflict detection | `Scheduler.detect_conflicts()` | Groups pending tasks by start time and returns a warning string for any shared `HH:MM` slot (exact-time match; does not crash). |
-| Recurring tasks | `Task.next_occurrence()`, `Scheduler.mark_task_complete()` | Completing a `daily`/`weekly` task auto-creates the next instance with `due_date` advanced via `timedelta`. |
+| Task sorting | `Scheduler.sort_by_time()` |
+ Sorts tasks by their `HH:MM` clock time using `sorted()` with a `lambda` key. |
+| Priority selection | `Scheduler.generate_schedule()` / `schedule_for_owner()` | 
+Fills a time budget with the highest-priority tasks; skips ones that don't fit. |
+| Filtering | `Scheduler.filter_by_pet()`, `Scheduler.filter_by_status()` 
+
+| Filter all tasks by pet name or by completion status. |
+
+| Conflict detection | `Scheduler.detect_conflicts()` |
+
+ Groups pending tasks by start time and returns a warning string for any shared time slot (exact-time match; does not crash). |
+
+
+| Recurring tasks | `Task.next_occurrence()`, `Scheduler.mark_task_complete()`
+
+ | Completing a a daily & weekly task auto-creates the next instance with due date  advanced via time delta  |
 
 ## 📸 Demo Walkthrough
 
