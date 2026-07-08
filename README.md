@@ -42,6 +42,18 @@ pip install -r requirements.txt
 6. Connect your logic to the Streamlit UI in `app.py`.
 7. Refine UML so it matches what you actually built.
 
+## ✨ Features
+
+- **Owner → Pet → Task model** — an owner manages multiple pets, and each pet owns a list of care tasks (data classes in `pawpal_system.py`).
+- **Priority-based day planning** — the scheduler greedily fits the highest-priority tasks into a fixed time budget and skips those that don't fit.
+- **Sorting by time** — tasks are ordered chronologically by their `HH:MM` start time.
+- **Filtering** — view tasks by pet or by completion status.
+- **Daily/weekly recurrence** — completing a recurring task automatically creates the next occurrence with its due date advanced.
+- **Conflict warnings** — the scheduler flags when two pending tasks share the same start time, without crashing.
+- **Streamlit UI + CLI demo** — an interactive app (`app.py`) that persists state across reruns, plus a terminal demo (`main.py`).
+
+> **Architecture:** the final class design is in [`diagrams/uml_final.mmd`](diagrams/uml_final.mmd).
+
 ## 🖥️ Sample Output
 
 Below is the terminal output from running `python main.py`. The owner (Betty) has
@@ -60,13 +72,12 @@ Today's Schedule
 3 task(s), 55 of 60 min used.
 
 All tasks sorted by time
-
-
-07:30  Feed breakfast 
-08:00  Morning walk  
-12:00  Clean litter box  
-5:00  Evening walk  
-7:00  Play / enrichment
+--------------------------------------------
+07:30  Feed breakfast  (high)
+08:00  Morning walk  (high)
+12:00  Clean litter box  (medium)
+18:00  Evening walk  (medium)
+18:00  Play / enrichment  (low)
 
 Tasks for Tyna:
   - Evening walk
@@ -126,31 +137,65 @@ implements it:
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | `Scheduler.sort_by_time()` |
- Sorts tasks by their `HH:MM` clock time using `sorted()` with a `lambda` key. |
-| Priority selection | `Scheduler.generate_schedule()` / `schedule_for_owner()` | 
-Fills a time budget with the highest-priority tasks; skips ones that don't fit. |
-| Filtering | `Scheduler.filter_by_pet()`, `Scheduler.filter_by_status()` 
-
-| Filter all tasks by pet name or by completion status. |
-
-| Conflict detection | `Scheduler.detect_conflicts()` |
-
- Groups pending tasks by start time and returns a warning string for any shared time slot (exact-time match; does not crash). |
-
-
-| Recurring tasks | `Task.next_occurrence()`, `Scheduler.mark_task_complete()`
-
- | Completing a a daily & weekly task auto-creates the next instance with due date  advanced via time delta  |
+| Task sorting | `Scheduler.sort_by_time()` | Sorts tasks by their `HH:MM` clock time using `sorted()` with a `lambda` key. |
+| Priority selection | `Scheduler.generate_schedule()` / `schedule_for_owner()` | Fills a time budget with the highest-priority tasks; skips ones that don't fit. |
+| Filtering | `Scheduler.filter_by_pet()`, `Scheduler.filter_by_status()` | Filter all tasks by pet name or by completion status. |
+| Conflict detection | `Scheduler.detect_conflicts()` | Groups pending tasks by start time and returns a warning string for any shared time slot (exact-time match; does not crash). |
+| Recurring tasks | `Task.next_occurrence()`, `Scheduler.mark_task_complete()` | Completing a daily/weekly task auto-creates the next instance with `due_date` advanced via `timedelta`. |
 
 ## 📸 Demo Walkthrough
 
-Describe your app in numbered steps so a reader can follow along without watching a video:
+Launch the interactive app with:
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+```bash
+python -m streamlit run app.py
+```
+
+**What you can do in the UI**
+
+- Set the **owner name** and **add pets** (name + species). Pets persist across page
+  reruns because the `Owner` object lives in `st.session_state`.
+- **Add tasks** to any pet: title, start time (`HH:MM`), duration, frequency
+  (daily/weekly/once), and priority.
+- Review a **Current tasks** table per pet, shown in chronological order.
+- Set an **available time budget** and click **Generate schedule** to build the day's plan.
+
+**Example workflow**
+
+1. Enter the owner's name (e.g., *Betty*).
+2. Add a pet → *Tyna* (dog), then a second pet → *Dennis* (cat).
+3. Add a task → *Morning walk*, `08:00`, 30 min, daily, high priority.
+4. Add more tasks, including two at the same time (e.g., both `18:00`) to trigger a conflict.
+5. Set the budget to 60 minutes and click **Generate schedule**.
+
+**Key Scheduler behaviors shown**
+
+- The plan lists the highest-priority tasks that fit the budget, **sorted by time**.
+- A green **success** banner confirms how many tasks were scheduled.
+- Any two tasks sharing a start time raise a **⚠️ conflict warning** telling the owner
+  which tasks to reschedule; a clean day shows a success message instead.
+
+**Sample CLI output** (from `python main.py`):
+
+```
+Today's Schedule
+============================================
+07:30  Feed breakfast        10 min  [high]
+08:00  Morning walk          30 min  [high]
+12:00  Clean litter box      15 min  [medium]
+--------------------------------------------
+3 task(s), 55 of 60 min used.
+
+All tasks sorted by time
+--------------------------------------------
+07:30  Feed breakfast  (high)
+08:00  Morning walk  (high)
+12:00  Clean litter box  (medium)
+18:00  Evening walk  (medium)
+18:00  Play / enrichment  (low)
+
+Conflict check:
+  ⚠️ Conflict at 18:00: Evening walk, Play / enrichment
+```
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->

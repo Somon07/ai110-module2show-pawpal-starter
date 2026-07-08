@@ -59,6 +59,9 @@ with st.form("add_task", clear_on_submit=True):
         )
         st.success(f"Added '{task_title}' for {target_pet}!")
 
+# A scheduler is used here for its sorting/conflict helpers as well as planning.
+scheduler = Scheduler(available_time_minutes=60)
+
 # --- Current tasks ------------------------------------------------------------
 st.markdown("### Current tasks")
 for pet in owner.pets:
@@ -72,9 +75,10 @@ for pet in owner.pets:
                     "min": task.duration_minutes,
                     "priority": task.priority.name.lower(),
                     "frequency": task.frequency,
-                    "done": task.completed,
+                    "done": "✅" if task.completed else "",
                 }
-                for task in pet.tasks
+                # Display each pet's tasks in chronological order.
+                for task in scheduler.sort_by_time(pet.tasks)
             ]
         )
 
@@ -85,10 +89,20 @@ st.subheader("Build Schedule")
 budget = st.number_input("Available time (minutes)", min_value=10, max_value=600, value=60)
 
 if st.button("Generate schedule"):
-    scheduler = Scheduler(int(budget))
-    scheduler.schedule_for_owner(owner)
-    st.code(scheduler.explain_plan())
+    scheduler.available_time_minutes = int(budget)
+    plan = scheduler.schedule_for_owner(owner)
 
+    st.markdown("#### 🗓️ Today's plan")
+    st.code(scheduler.explain_plan())
+    if plan:
+        st.success(f"Scheduled {len(plan)} task(s) within {int(budget)} minutes.")
+
+    # Present conflicts prominently so the owner knows exactly what to reschedule.
+    st.markdown("#### ⚠️ Conflicts")
     conflicts = scheduler.detect_conflicts(owner.all_tasks())
-    for warning in conflicts:
-        st.warning(warning)
+    if conflicts:
+        for warning in conflicts:
+            st.warning(warning)
+        st.caption("Two tasks share a start time — consider moving one to avoid a clash.")
+    else:
+        st.success("No time conflicts detected. 🎉")
