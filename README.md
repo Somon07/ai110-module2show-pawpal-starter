@@ -53,7 +53,7 @@ budget and greedily fits the highest-priority tasks first, so the low-priority
 Today's Schedule
 ========================================
 1. Feed breakfast          10 min  [high, daily]
-2. Morning walk            30 min  [high, daily]
+2. Walk to park            30 min  [high, daily]
 3. Clean litter box        15 min  [medium, daily]
 ----------------------------------------
 3 task(s), 55 of 60 min used.
