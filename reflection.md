@@ -36,7 +36,24 @@ For my design, I created 4 classes with the inital UML design. I also made 3 jus
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
+
+  My conflict detection only flags tasks that share the *exact same* start time
+  (`HH:MM`). It groups tasks by their `time` string and warns when two land on the same
+  slot, but it does not look at each task's `duration_minutes`, so it will miss an
+  overlap like a 30-minute walk at 08:00 running into a feeding at 08:15. It also
+  compares clock times only, not dates, so a daily task's next occurrence (due tomorrow)
+  is not treated as conflicting with today's — I skip completed tasks to avoid false
+  alarms there.
+
 - Why is that tradeoff reasonable for this scenario?
+
+  For a pet owner planning a day, exact-time matches catch the most common real mistake
+  (accidentally scheduling two things for the same moment) and the warning is cheap and
+  easy to read. True interval-overlap detection would mean parsing every time into
+  minutes and comparing ranges, which is more code and more ways to get edge cases wrong.
+  The lightweight version returns a friendly warning instead of crashing, which fits an
+  early, keep-it-simple version of the app; I noted interval overlap as a future
+  improvement.
 
 ---
 

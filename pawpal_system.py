@@ -6,7 +6,8 @@ Data objects (Task, Pet, Owner) use Python dataclasses to keep the code clean.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from datetime import date, timedelta
 from enum import IntEnum
 
 
@@ -26,7 +27,9 @@ class Task:
     duration_minutes: int
     frequency: str = "daily"
     priority: Priority = Priority.MEDIUM
+    time: str = "00:00"
     completed: bool = False
+    due_date: date | None = None
 
     def mark_complete(self) -> None:
         """Mark this task as done."""
@@ -35,6 +38,14 @@ class Task:
     def update_priority(self, new_priority: Priority) -> None:
         """Change this task's priority."""
         self.priority = Priority(new_priority)
+
+    def next_occurrence(self) -> Task | None:
+        """Return a fresh copy due at the next interval, or None if it does not repeat."""
+        step = {"daily": timedelta(days=1), "weekly": timedelta(weeks=1)}.get(self.frequency)
+        if step is None:
+            return None
+        base = self.due_date or date.today()
+        return replace(self, completed=False, due_date=base + step)
 
 
 @dataclass
@@ -97,21 +108,61 @@ class Scheduler:
         """Build the plan straight from an owner's pets via Owner.all_tasks()."""
         return self.generate_schedule(owner.all_tasks())
 
+    def sort_by_time(self, tasks: list[Task]) -> list[Task]:
+        """Return tasks ordered by their scheduled HH:MM clock time."""
+        return sorted(tasks, key=lambda task: task.time)
+
+    def filter_by_status(self, tasks: list[Task], completed: bool = True) -> list[Task]:
+        """Return only the tasks whose completed flag matches `completed`."""
+        return [task for task in tasks if task.completed == completed]
+
+    def filter_by_pet(self, owner: Owner, pet_name: str) -> list[Task]:
+        """Return all tasks belonging to the pet with the given name."""
+        return [
+            task
+            for pet in owner.pets
+            if pet.name == pet_name
+            for task in pet.tasks
+        ]
+
+    def mark_task_complete(self, task: Task, pet: Pet) -> Task | None:
+        """Mark a task complete and, if it recurs, add its next occurrence to the pet."""
+        task.mark_complete()
+        upcoming = task.next_occurrence()
+        if upcoming is not None:
+            pet.add_task(upcoming)
+        return upcoming
+
+    def detect_conflicts(self, tasks: list[Task]) -> list[str]:
+        """Return a warning string for each clock time shared by more than one pending task."""
+        by_time: dict[str, list[str]] = {}
+        for task in tasks:
+            if task.completed:
+                continue
+            by_time.setdefault(task.time, []).append(task.description)
+
+        warnings = []
+        for clock_time, descriptions in sorted(by_time.items()):
+            if len(descriptions) > 1:
+                warnings.append(
+                    f"⚠️ Conflict at {clock_time}: {', '.join(descriptions)}"
+                )
+        return warnings
+
     def explain_plan(self) -> str:
-        """Return a readable, terminal-friendly summary of the current plan."""
+        """Return a readable, terminal-friendly summary of the current plan (by time)."""
         if not self.plan:
             return "No tasks scheduled (nothing fit the available time)."
 
-        lines = ["Today's Schedule", "=" * 40]
+        lines = ["Today's Schedule", "=" * 44]
         used = 0
-        for index, task in enumerate(self.plan, start=1):
+        for task in self.sort_by_time(self.plan):
             used += task.duration_minutes
             lines.append(
-                f"{index}. {task.description:<22} "
-                f"{task.duration_minutes:>3} min  "
-                f"[{task.priority.name.lower()}, {task.frequency}]"
+                f"{task.time}  {task.description:<20} "
+                f"{task.duration_minutes:>3} min  [{task.priority.name.lower()}]"
             )
-        lines.append("-" * 40)
+        lines.append("-" * 44)
         lines.append(
             f"{len(self.plan)} task(s), {used} of "
             f"{self.available_time_minutes} min used."

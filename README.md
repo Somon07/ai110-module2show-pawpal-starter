@@ -45,18 +45,41 @@ pip install -r requirements.txt
 ## 🖥️ Sample Output
 
 Below is the terminal output from running `python main.py`. The owner (Betty) has
-two pets — Tyna (dog) and Dennis (cat) — with four tasks. The scheduler has a 60-minute
-budget and greedily fits the highest-priority tasks first, so the low-priority
-"Play / enrichment" task is dropped once time runs out:
+two pets — Tyna (dog) and Dennis (cat) — with five tasks added out of order. The
+scheduler greedily fits the highest-priority tasks into a 60-minute budget (displayed
+by time), then demonstrates sorting, filtering, a recurring task, and conflict
+detection:
 
 ```
 Today's Schedule
-========================================
-1. Feed breakfast          10 min  [high, daily]
-2. Walk to park            30 min  [high, daily]
-3. Clean litter box        15 min  [medium, daily]
-----------------------------------------
+============================================
+07:30  Feed breakfast        10 min  [high]
+08:00  Morning walk          30 min  [high]
+12:00  Clean litter box      15 min  [medium]
+--------------------------------------------
 3 task(s), 55 of 60 min used.
+
+All tasks sorted by time
+--------------------------------------------
+07:30  Feed breakfast  (high)
+08:00  Morning walk  (high)
+12:00  Clean litter box  (medium)
+18:00  Evening walk  (medium)
+18:00  Play / enrichment  (low)
+
+Tasks for Tyna:
+  - Evening walk
+  - Morning walk
+  - Feed breakfast
+
+Completed 'Feed breakfast'. Next occurrence due: 2026-07-08
+Pending tasks for Tyna:
+  - Evening walk
+  - Morning walk
+  - Feed breakfast
+
+Conflict check:
+  ⚠️ Conflict at 18:00: Evening walk, Play / enrichment
 ```
 
 ## 🧪 Testing PawPal+
@@ -83,14 +106,16 @@ tests\test_pawpal.py ..                                                  [100%]
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
+The scheduling logic lives in `pawpal_system.py`. Each smart feature and the method that
+implements it:
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Task sorting | `Scheduler.sort_by_time()` | Sorts tasks by their `HH:MM` clock time using `sorted()` with a `lambda` key. |
+| Priority selection | `Scheduler.generate_schedule()` / `schedule_for_owner()` | Greedily fills a time budget with the highest-priority tasks; skips ones that don't fit. |
+| Filtering | `Scheduler.filter_by_pet()`, `Scheduler.filter_by_status()` | Filter all tasks by pet name or by completion status. |
+| Conflict detection | `Scheduler.detect_conflicts()` | Groups pending tasks by start time and returns a warning string for any shared `HH:MM` slot (exact-time match; does not crash). |
+| Recurring tasks | `Task.next_occurrence()`, `Scheduler.mark_task_complete()` | Completing a `daily`/`weekly` task auto-creates the next instance with `due_date` advanced via `timedelta`. |
 
 ## 📸 Demo Walkthrough
 
